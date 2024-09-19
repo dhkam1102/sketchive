@@ -1,0 +1,54 @@
+backend/
+├── cmd/                    # Entry point for your application
+│   └── server/             # Server's main function to start the application
+│       └── main.go         # Go main file to start the web server
+├── internal/               # Internal packages that contain business logic
+│   ├── api/                # API routes and handlers
+│   │   ├── whiteboard.go   # Whiteboard CRUD and real-time sync handlers
+│   │   ├── auth.go         # OAuth 2.0 & JWT based authentication
+│   │   └── roles.go        # Role-based access control
+│   ├── websocket/          # WebSocket logic
+│   │   └── connection.go   # WebSocket connection handlers
+│   ├── db/                 # Database models and queries
+│   │   ├── whiteboard.go   # Database interaction for whiteboards
+│   │   ├── user.go         # Database interaction for user authentication
+│   │   └── migrations/     # SQL migration files
+│   └── services/           # Services such as JWT generation, OAuth handling, etc.
+│       └── auth_service.go # JWT and OAuth logic
+├── pkg/                    # Reusable packages across the project
+│   └── logger/             # Logger utility
+└── go.mod                  # Go module file
+
+frontend/
+├── public/                 # Static assets such as index.html
+├── src/                    # React.js source code
+│   ├── components/         # Reusable React components
+│   │   ├── Whiteboard.js   # Main whiteboard component using Fabric.js/Konva.js
+│   │   ├── Toolbar.js      # UI toolbar for drawing tools
+│   │   ├── Suggestions.js  # Display AI suggestions (ghost shapes or dots)
+│   └── pages/              # Pages of the app (login, dashboard)
+│       ├── Login.js        # OAuth login page (Google/GitHub)
+│       └── Dashboard.js    # User dashboard for managing whiteboards
+├── utils/                  # Utility functions (e.g., WebSocket connection handlers)
+│   └── websocket.js        # WebSocket utility for real-time sync
+├── App.js                  # Main React component
+├── index.js                # Entry point for React.js
+└── tailwind.config.js       # Tailwind CSS configuration file
+
+ai/
+├── api/                    # API endpoints to expose AI functionality
+│   └── ai_server.py        # Python Flask or FastAPI app to serve AI suggestions
+├── model/                  # AI/ML models for shape recognition
+│   └── shape_recognizer.py # Main AI logic for recognizing shapes
+├── tests/                  # Unit tests for AI modules
+│   └── test_shapes.py      # Tests for shape recognition accuracy
+└── requirements.txt        # Python dependencies (Flask/FastAPI, TensorFlow, etc.)
+
+deployment/
+├── k8s/                     # Kubernetes YAML files
+│   ├── deployment.yaml      # Kubernetes deployment for all services
+│   └── service.yaml         # Kubernetes service definitions
+├── docker-compose.yml       # Local development setup for all services
+└── Dockerfile.ai            # Dockerfile for the AI service
+└── Dockerfile.backend       # Dockerfile for the Go backend
+└── Dockerfile.frontend      # Dockerfile for the React frontend
