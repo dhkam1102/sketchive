@@ -25,3 +25,20 @@ func CreateWhiteboard(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(newBoard)
 
 }
+
+func GetWhiteboard(w http.ResponseWriter, r *http.request) {
+	whiteboardID := r.URL.Query().Get(id)
+	if whiteboardID == "" {
+		http.Error(w, "Failed to get whiteboard's ID", http.StatusInternalServerError)
+		return
+	}
+
+	// need to build GetWhiteboard()
+	whiteboard, err := db.GetWhiteboardById(whiteboardID)
+	if err != nil {
+		http.Error(w, "Failed to get whiteboard by its ID", http.StatusInternalServerError)
+		return
+	}
+	// sending Whiteboard data as json
+	json.NewEncoder(w).Encode(whiteboard)
+}
