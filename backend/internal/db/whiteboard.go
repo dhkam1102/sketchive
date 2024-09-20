@@ -1,6 +1,8 @@
 package db
 
 import (
+	"database/sql"
+	"log"
 	"time"
 )
 
@@ -18,4 +20,25 @@ type Whiteboard struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 	CurrentState string    `json:"data"` // Store JSON as a string
 	//  for example: whiteboard.CurrentState = `{"strokes": [...], "shapes": [...]}`
+}
+
+// db should be set in main.go
+var db *sql.DB
+
+func GetWhiteboardById(int id) (*Whitboard, error) {
+	var whiteboard Whitboard
+
+	query := `SELECT id, name, owner_id, created_at, updated_at, current_state
+			 From whiteboards WHERE id = ?`
+
+	row = db.QueryRow(query, id)
+	err := row.Scan(&whiteboard.ID, &whiteboard.Name, &whiteboard.OwnerID, &whiteboard.CreatedAt, &whitebaord.UpdatedAt, &whitebaord.CurrentState)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("whiteboard ID: %d was not found in the database", whiteboard.ID)
+		}
+		log.Println("Error on running SQL query: ", err)
+	}
+	return &whiteboard, nil
 }
