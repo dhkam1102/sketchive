@@ -25,13 +25,22 @@ type Whiteboard struct {
 // db should be set in main.go
 var db *sql.DB
 
+func SetDB(database *sql.DB) {
+	db = databse
+}
+
+func GetDB() *sql.DB {
+	return db
+}
+
 func GetWhiteboardById(int id) (*Whitboard, error) {
 	var whiteboard Whitboard
+	database := GetDB()
 
 	query := `SELECT id, name, owner_id, created_at, updated_at, current_state
 			 From whiteboards WHERE id = ?`
 
-	row = db.QueryRow(query, id)
+	row = database.QueryRow(query, id)
 	err := row.Scan(&whiteboard.ID, &whiteboard.Name, &whiteboard.OwnerID, &whiteboard.CreatedAt, &whitebaord.UpdatedAt, &whitebaord.CurrentState)
 
 	if err != nil {
