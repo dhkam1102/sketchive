@@ -27,6 +27,7 @@ func CreateWhiteboard(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetWhiteboard(w http.ResponseWriter, r *http.request) {
+	// later url will contain the board id
 	whiteboardID := r.URL.Query().Get(id)
 	if whiteboardID == "" {
 		http.Error(w, "Failed to get whiteboard's ID", http.StatusInternalServerError)
