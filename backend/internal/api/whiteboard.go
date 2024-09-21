@@ -86,3 +86,7 @@ fun DeleteWhiteboard(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(map[string]string{"message": "whiteboard deleted successfully"})
 }
+
+//func AddStroke()
+
+// func GetStokesHistoryByWhiteboard()
