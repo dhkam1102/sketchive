@@ -43,3 +43,30 @@ func GetWhiteboard(w http.ResponseWriter, r *http.request) {
 	// sending Whiteboard data as json
 	json.NewEncoder(w).Encode(whiteboard)
 }
+
+func UpdateWhitebaord(w http.ResponseWriter, r *http.Request) {
+	whiteboardID := r.URL.Query().Get("id")
+	if whiteboardID == "" {
+		http.Error(w, "Missing whiteboard ID", http.StatusInternalServerError)
+		return
+	}
+
+	var updatedBoard db.whiteboard
+	// need more studing on how the decoder works (PUT, PATCH requests)
+	// decoding the whiteboard's body (which contains the new data)
+	err := json.NewDecoder(r.Body).Decode(&updatedBoard)
+	if err != nil {
+		http.Error(w, "invalid body request")
+		return
+	}
+
+	updatedBoard.UpdatedAt = time.Now()
+
+	error = db.updateWhiteboard(whiteboardID, &updatedBoard)
+	if error != nil {
+		http.Error(w, "failed to upate the whitebaord", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(updatedBoard)
+}

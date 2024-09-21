@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+	//dsn: Data Source Name
 	dsn := "root:@tcp(127.0.0.1:3306)/sketchive"
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
