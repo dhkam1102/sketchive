@@ -51,3 +51,30 @@ func GetWhiteboardById(int id) (*Whitboard, error) {
 	}
 	return &whiteboard, nil
 }
+
+func UpdateWhiteboard(id int, whiteboard *Whiteboard) error {
+	database := GetDB()
+	query := `UPDATE whiteboards 
+              SET name = ?, current_state = ?, updated_at = ?
+              WHERE id = ?`
+
+	_, err := database.Exec(query, whiteboard.Name, whiteboard.CurrentState, time.Now(), id)
+	if err != nil {
+		log.Println("Error updating whiteboard:", err)
+		return err
+	}
+	return nil
+}
+
+func DeleteWhiteboard(id int) error {
+	database := GetDB()
+	query := "DELETE FROM whiteboards WHERE id = ?"
+
+	_, err := database.Exec(query, id)
+	if err != nil {
+		log.Println("Error deleting whiteboard:", err)
+		return err
+	}
+
+	return nil
+}

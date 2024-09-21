@@ -28,7 +28,7 @@ func CreateWhiteboard(w http.ResponseWriter, r *http.Request) {
 
 func GetWhiteboard(w http.ResponseWriter, r *http.request) {
 	// later url will contain the board id
-	whiteboardID := r.URL.Query().Get(id)
+	whiteboardID := r.URL.Query().Get("id")
 	if whiteboardID == "" {
 		http.Error(w, "Failed to get whiteboard's ID", http.StatusInternalServerError)
 		return
@@ -53,7 +53,7 @@ func UpdateWhitebaord(w http.ResponseWriter, r *http.Request) {
 
 	var updatedBoard db.whiteboard
 	// need more studing on how the decoder works (PUT, PATCH requests)
-	// decoding the whiteboard's body (which contains the new data)
+	// decoding the whiteboard's body from the request (which contains the new data)
 	err := json.NewDecoder(r.Body).Decode(&updatedBoard)
 	if err != nil {
 		http.Error(w, "invalid body request")
@@ -69,4 +69,20 @@ func UpdateWhitebaord(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(updatedBoard)
+}
+
+fun DeleteWhiteboard(w http.ResponseWriter, r *http.Request) {
+	whiteboardID := r.URL.Query().Get("id")
+	if whiteboardID == "" {
+		http.Error(w, "Missing whiteboard ID", http.StatusInternalServerError)
+		return
+	}
+
+	err := db.DeleteWhiteboardByID(whiteboardID)
+    if err != nil {
+        http.Error(w, "Failed to delete whiteboard", http.StatusInternalServerError)
+        return
+    }
+
+	json.NewEncoder(w).Encode(map[string]string{"message": "whiteboard deleted successfully"})
 }
