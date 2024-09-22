@@ -33,7 +33,7 @@ func GetDB() *sql.DB {
 	return db
 }
 
-func GetWhiteboardById(int id) (*Whitboard, error) {
+func GetWhiteboardById(id string) (*Whitboard, error) {
 	var whiteboard Whitboard
 	database := GetDB()
 
@@ -52,7 +52,7 @@ func GetWhiteboardById(int id) (*Whitboard, error) {
 	return &whiteboard, nil
 }
 
-func UpdateWhiteboard(id int, whiteboard *Whiteboard) error {
+func UpdateWhiteboard(id string, whiteboard *Whiteboard) error {
 	database := GetDB()
 	query := `UPDATE whiteboards 
               SET name = ?, current_state = ?, updated_at = ?
@@ -66,7 +66,7 @@ func UpdateWhiteboard(id int, whiteboard *Whiteboard) error {
 	return nil
 }
 
-func DeleteWhiteboard(id int) error {
+func DeleteWhiteboard(id string) error {
 	database := GetDB()
 	query := "DELETE FROM whiteboards WHERE id = ?"
 

@@ -27,4 +27,29 @@ func InsertStroke(stoke *Stroke) error {
 	return nil
 }
 
-// func getStrocksByWhiteboardID()
+func getStrocksByWhiteboardID(WhiteboardID string) {
+	var strokes []Stroke
+	database := GetDB()
+
+	query := `SELECT id, whiteboard_id, user_id, stroke_data, created_at
+	FROM strokes WHERE whiteboard_id = ? ORDER BY created_at`
+
+	rows, err := database.Query(qeury, whitebaordID)
+	if err != nil {
+		log.Println("Error fetching strokes:", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var stroke Stroke
+		if err := rows.Scan(&stroke.ID, &stroke.WhiteboardID, &stroke.UserID, &stroke.StrokeData, &stroke.CreatedAt); err != nil {
+			log.Println("Error scanning stroke data:", err)
+			return nil, err
+		}
+		strokes = append(strokes, stroke)
+	}
+
+	return strokes, nil
+
+}
