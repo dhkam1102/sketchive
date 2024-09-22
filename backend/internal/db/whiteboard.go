@@ -33,7 +33,7 @@ func GetDB() *sql.DB {
 	return db
 }
 
-func GetWhiteboardById(id string) (*Whitboard, error) {
+func GetWhiteboardById(id int) (*Whitboard, error) {
 	var whiteboard Whitboard
 	database := GetDB()
 
@@ -41,18 +41,19 @@ func GetWhiteboardById(id string) (*Whitboard, error) {
 			 From whiteboards WHERE id = ?`
 
 	row = database.QueryRow(query, id)
-	err := row.Scan(&whiteboard.ID, &whiteboard.Name, &whiteboard.OwnerID, &whiteboard.CreatedAt, &whitebaord.UpdatedAt, &whitebaord.CurrentState)
+	err := row.Scan(&whiteboard.ID, &whiteboard.Name, &whiteboard.OwnerID, &whiteboard.CreatedAt, &whiteboard.UpdatedAt, &whiteboard.CurrentState)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("whiteboard ID: %d was not found in the database", whiteboard.ID)
 		}
 		log.Println("Error on running SQL query: ", err)
+		return nil, err
 	}
 	return &whiteboard, nil
 }
 
-func UpdateWhiteboard(id string, whiteboard *Whiteboard) error {
+func UpdateWhiteboard(id int, whiteboard *Whiteboard) error {
 	database := GetDB()
 	query := `UPDATE whiteboards 
               SET name = ?, current_state = ?, updated_at = ?
@@ -66,7 +67,7 @@ func UpdateWhiteboard(id string, whiteboard *Whiteboard) error {
 	return nil
 }
 
-func DeleteWhiteboard(id string) error {
+func DeleteWhiteboard(id int) error {
 	database := GetDB()
 	query := "DELETE FROM whiteboards WHERE id = ?"
 

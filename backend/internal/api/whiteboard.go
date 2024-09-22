@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"sketchive/internal/db"
+	"strconv"
 	"time"
 )
 
@@ -23,74 +24,93 @@ func CreateWhiteboard(w http.ResponseWriter, r *http.Request) {
 
 	// Returning the newly created whiteboard as a JSON response
 	json.NewEncoder(w).Encode(newBoard)
-
 }
 
-func GetWhiteboard(w http.ResponseWriter, r *http.request) {
-	// later url will contain the board id
+func GetWhiteboard(w http.ResponseWriter, r *http.Request) {
 	whiteboardID := r.URL.Query().Get("id")
 	if whiteboardID == "" {
-		http.Error(w, "Failed to get whiteboard's ID", http.StatusInternalServerError)
+		http.Error(w, "Failed to get whiteboard's ID", http.StatusBadRequest)
 		return
 	}
 
-	// need to build GetWhiteboard()
-	whiteboard, err := db.GetWhiteboardById(whiteboardID)
+	// Convert string to int
+	id, err := strconv.Atoi(whiteboardID)
+	if err != nil {
+		http.Error(w, "Failed to convert whiteboardID to int", http.StatusBadRequest)
+		return
+	}
+
+	// Correctly pass the integer ID to the db function
+	whiteboard, err := db.GetWhiteboardById(id)
 	if err != nil {
 		http.Error(w, "Failed to get whiteboard by its ID", http.StatusInternalServerError)
 		return
 	}
-	// sending Whiteboard data as json
+
+	// Sending Whiteboard data as JSON
 	json.NewEncoder(w).Encode(whiteboard)
 }
 
-func UpdateWhitebaord(w http.ResponseWriter, r *http.Request) {
+func UpdateWhiteboard(w http.ResponseWriter, r *http.Request) {
 	whiteboardID := r.URL.Query().Get("id")
 	if whiteboardID == "" {
-		http.Error(w, "Missing whiteboard ID", http.StatusInternalServerError)
+		http.Error(w, "Missing whiteboard ID", http.StatusBadRequest)
 		return
 	}
 
-	var updatedBoard db.whiteboard
-	// need more studing on how the decoder works (PUT, PATCH requests)
-	// decoding the whiteboard's body from the request (which contains the new data)
-	err := json.NewDecoder(r.Body).Decode(&updatedBoard)
+	id, err := strconv.Atoi(whiteboardID)
 	if err != nil {
-		http.Error(w, "invalid body request")
+		http.Error(w, "Failed to convert whiteboardID to int", http.StatusBadRequest)
+		return
+	}
+
+	var updatedBoard db.Whiteboard
+	// Decoding the whiteboard's body from the request
+	err = json.NewDecoder(r.Body).Decode(&updatedBoard)
+	if err != nil {
+		http.Error(w, "Invalid body request", http.StatusBadRequest)
 		return
 	}
 
 	updatedBoard.UpdatedAt = time.Now()
 
-	error = db.updateWhiteboard(whiteboardID, &updatedBoard)
-	if error != nil {
-		http.Error(w, "failed to upate the whitebaord", http.StatusInternalServerError)
+	// Correct function call with integer ID
+	err = db.UpdateWhiteboard(id, &updatedBoard)
+	if err != nil {
+		http.Error(w, "Failed to update the whiteboard", http.StatusInternalServerError)
 		return
 	}
 
 	json.NewEncoder(w).Encode(updatedBoard)
 }
 
-fun DeleteWhiteboard(w http.ResponseWriter, r *http.Request) {
+func DeleteWhiteboard(w http.ResponseWriter, r *http.Request) {
 	whiteboardID := r.URL.Query().Get("id")
 	if whiteboardID == "" {
-		http.Error(w, "Missing whiteboard ID", http.StatusInternalServerError)
+		http.Error(w, "Missing whiteboard ID", http.StatusBadRequest)
 		return
 	}
 
-	err := db.DeleteWhiteboardByID(whiteboardID)
-    if err != nil {
-        http.Error(w, "Failed to delete whiteboard", http.StatusInternalServerError)
-        return
-    }
+	id, err := strconv.Atoi(whiteboardID)
+	if err != nil {
+		http.Error(w, "Failed to convert whiteboardID to int", http.StatusBadRequest)
+		return
+	}
 
-	json.NewEncoder(w).Encode(map[string]string{"message": "whiteboard deleted successfully"})
+	// Correctly pass integer ID to the db function
+	err = db.DeleteWhiteboard(id)
+	if err != nil {
+		http.Error(w, "Failed to delete whiteboard", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{"message": "Whiteboard deleted successfully"})
 }
 
-func AddStroke() {
+func AddStroke(w http.ResponseWriter, r *http.Request) {
 	var newStroke db.Stroke
 
-	err := db.NewDecoder(r.Body).Decode(&newStroke)
+	err := json.NewDecoder(r.Body).Decode(&newStroke)
 	if err != nil {
 		http.Error(w, "Error when decoding stroke", http.StatusBadRequest)
 		return
@@ -107,19 +127,24 @@ func AddStroke() {
 	json.NewEncoder(w).Encode(newStroke)
 }
 
-
-func GetStokesHistoryByWhiteboard(w http.ResponseWriter, r *http.Request) {
+func GetStrokesHistoryByWhiteboard(w http.ResponseWriter, r *http.Request) {
 	whiteboardID := r.URL.Query().Get("id")
 	if whiteboardID == "" {
-		http.Error(w, "Failed to get whiteboard's ID", http.StatusInternalServerError)
+		http.Error(w, "Failed to get whiteboard's ID", http.StatusBadRequest)
 		return
 	}
-	
-	stokes, err := db.GetStokesByWhiteboard(whiteboardID)
+
+	id, err := strconv.Atoi(whiteboardID)
 	if err != nil {
-	http.Error(w, "Failed to retrieve strokes history", http.StatusInternalServerError)
-	return
-    }
+		http.Error(w, "Can't convert whiteboardID to int", http.StatusBadRequest)
+		return
+	}
+
+	strokes, err := db.GetStrokesByWhiteboardID(id)
+	if err != nil {
+		http.Error(w, "Failed to retrieve strokes history", http.StatusInternalServerError)
+		return
+	}
 
 	json.NewEncoder(w).Encode(strokes)
 }

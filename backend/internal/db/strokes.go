@@ -27,7 +27,7 @@ func InsertStroke(stoke *Stroke) error {
 	return nil
 }
 
-func getStrocksByWhiteboardID(WhiteboardID string) {
+func GetStokesByWhiteboardID(WhiteboardID int) {
 	var strokes []Stroke
 	database := GetDB()
 
