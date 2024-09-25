@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"time"
 )
@@ -15,7 +16,7 @@ import (
 type Whiteboard struct {
 	ID           int       `json:"id"`
 	Name         string    `json:"name"`
-	OwnwerID     int       `json:"owner"`
+	OwnerID      int       `json:"owner"`
 	CreatedAt    time.Time `json:"created"`
 	UpdatedAt    time.Time `json:"updated_at"`
 	CurrentState string    `json:"data"` // Store JSON as a string
@@ -26,21 +27,35 @@ type Whiteboard struct {
 var db *sql.DB
 
 func SetDB(database *sql.DB) {
-	db = databse
+	db = database
 }
 
 func GetDB() *sql.DB {
 	return db
 }
 
-func GetWhiteboardById(id int) (*Whitboard, error) {
-	var whiteboard Whitboard
+func InsertWhiteboard(board *Whiteboard) error {
+	query := `INSERT INTO whiteboards (name, owner_id, created_at, updated_at, current_state)
+	          VALUES (?, ?, ?, ?, ?)`
+
+	// Insert the whiteboard data into the database
+	_, err := db.Exec(query, board.Name, board.OwnerID, board.CreatedAt, board.UpdatedAt, board.CurrentState)
+	if err != nil {
+		log.Println("Error inserting whiteboard:", err)
+		return err
+	}
+
+	return nil
+}
+
+func GetWhiteboardById(id int) (*Whiteboard, error) {
+	var whiteboard Whiteboard
 	database := GetDB()
 
 	query := `SELECT id, name, owner_id, created_at, updated_at, current_state
 			 From whiteboards WHERE id = ?`
 
-	row = database.QueryRow(query, id)
+	row := database.QueryRow(query, id)
 	err := row.Scan(&whiteboard.ID, &whiteboard.Name, &whiteboard.OwnerID, &whiteboard.CreatedAt, &whiteboard.UpdatedAt, &whiteboard.CurrentState)
 
 	if err != nil {

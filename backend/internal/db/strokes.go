@@ -13,9 +13,9 @@ type Stroke struct {
 	CreatedAt    time.Time `json:"created_at"`
 }
 
-func InsertStroke(stoke *Stroke) error {
+func InsertStroke(stroke *Stroke) error {
 	query := `INSERT INTO strokes (whiteboard_id, user_id, stroke_data, created_at)
-			VALUES (?, ? ?, ?)`
+			VALUES (?, ?, ?)`
 
 	database := GetDB()
 	_, err := database.Exec(query, stroke.WhiteboardID, stroke.UserID, stroke.StrokeData, stroke.CreatedAt)
@@ -27,14 +27,14 @@ func InsertStroke(stoke *Stroke) error {
 	return nil
 }
 
-func GetStokesByWhiteboardID(WhiteboardID int) {
+func GetStrokesByWhiteboardID(whiteboardID int) ([]Stroke, error) {
 	var strokes []Stroke
 	database := GetDB()
 
 	query := `SELECT id, whiteboard_id, user_id, stroke_data, created_at
-	FROM strokes WHERE whiteboard_id = ? ORDER BY created_at`
+              FROM strokes WHERE whiteboard_id = ? ORDER BY created_at`
 
-	rows, err := database.Query(qeury, whitebaordID)
+	rows, err := database.Query(query, whiteboardID)
 	if err != nil {
 		log.Println("Error fetching strokes:", err)
 		return nil, err
@@ -51,5 +51,4 @@ func GetStokesByWhiteboardID(WhiteboardID int) {
 	}
 
 	return strokes, nil
-
 }
