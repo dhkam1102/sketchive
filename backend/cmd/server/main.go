@@ -65,8 +65,17 @@ func main() {
 		}
 	})
 
-	// Add more routes for strokes or users if needed
-	// mux.HandleFunc("/strokes", ...)
+	// Stroke related endpoints
+	mux.HandleFunc("/strokes", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case "POST":
+			api.AddStroke(w, r) // Handle adding a stroke
+		case "GET":
+			api.GetStrokesHistoryByWhiteboard(w, r) // Handle fetching stroke history
+		default:
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})
 
 	// Start the server with CORS enabled
 	fmt.Println("Starting server on :8080")

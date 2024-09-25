@@ -1,7 +1,7 @@
 CREATE TABLE whiteboards (
     id INT AUTO_INCREMENT PRIMARY KEY,  -- Use AUTO_INCREMENT for primary key in MySQL
     name VARCHAR(255),  -- Name of the whiteboard, could be optional
-    created_by INT,  -- Reference to the user who created the whiteboard
+    owner_id INT,  -- Reference to the user who created the whiteboard
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- When the whiteboard was created
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  -- Last updated time
     current_state JSON  -- Storing the latest state of the whiteboard as a JSON blob for quick recovery

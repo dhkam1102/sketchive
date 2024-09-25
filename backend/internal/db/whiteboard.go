@@ -50,13 +50,15 @@ func InsertWhiteboard(board *Whiteboard) error {
 
 func GetWhiteboardById(id int) (*Whiteboard, error) {
 	var whiteboard Whiteboard
+	var createdAt, updatedAt []byte // Scan the timestamps as byte slices (strings) first
+
 	database := GetDB()
 
 	query := `SELECT id, name, owner_id, created_at, updated_at, current_state
 			 From whiteboards WHERE id = ?`
 
 	row := database.QueryRow(query, id)
-	err := row.Scan(&whiteboard.ID, &whiteboard.Name, &whiteboard.OwnerID, &whiteboard.CreatedAt, &whiteboard.UpdatedAt, &whiteboard.CurrentState)
+	err := row.Scan(&whiteboard.ID, &whiteboard.Name, &whiteboard.OwnerID, &createdAt, &updatedAt, &whiteboard.CurrentState)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -65,6 +67,19 @@ func GetWhiteboardById(id int) (*Whiteboard, error) {
 		log.Println("Error on running SQL query: ", err)
 		return nil, err
 	}
+
+	whiteboard.CreatedAt, err = time.Parse("2006-01-02 15:04:05", string(createdAt))
+	if err != nil {
+		log.Println("Error parsing created_at:", err)
+		return nil, err
+	}
+
+	whiteboard.UpdatedAt, err = time.Parse("2006-01-02 15:04:05", string(updatedAt))
+	if err != nil {
+		log.Println("Error parsing updated_at:", err)
+		return nil, err
+	}
+
 	return &whiteboard, nil
 }
 
