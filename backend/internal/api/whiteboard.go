@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"sketchive/internal/db"
 	"strconv"
@@ -53,6 +54,7 @@ func GetWhiteboard(w http.ResponseWriter, r *http.Request) {
 
 func UpdateWhiteboard(w http.ResponseWriter, r *http.Request) {
 	whiteboardID := r.URL.Query().Get("id")
+	log.Println(whiteboardID)
 	if whiteboardID == "" {
 		http.Error(w, "Missing whiteboard ID", http.StatusBadRequest)
 		return
@@ -65,6 +67,8 @@ func UpdateWhiteboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var updatedBoard db.Whiteboard
+	log.Println("Incoming request body:")
+
 	// Decoding the whiteboard's body from the request
 	err = json.NewDecoder(r.Body).Decode(&updatedBoard)
 	if err != nil {
@@ -72,8 +76,8 @@ func UpdateWhiteboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("Received update for whiteboard:", updatedBoard)
 	updatedBoard.UpdatedAt = time.Now()
-
 	// Correct function call with integer ID
 	err = db.UpdateWhiteboard(id, &updatedBoard)
 	if err != nil {

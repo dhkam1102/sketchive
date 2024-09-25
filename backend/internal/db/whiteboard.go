@@ -94,6 +94,7 @@ func UpdateWhiteboard(id int, whiteboard *Whiteboard) error {
 		log.Println("Error updating whiteboard:", err)
 		return err
 	}
+	log.Println("Whiteboard updated in database")
 	return nil
 }
 
