@@ -14,12 +14,12 @@ import (
 // (convert JSON to a Go struct) the field when encoding and decoding JSON data.
 
 type Whiteboard struct {
-	ID           int       `json:"id"`
-	Name         string    `json:"name"`
-	OwnerID      int       `json:"owner"`
-	CreatedAt    time.Time `json:"created"`
-	UpdatedAt    time.Time `json:"updated_at"`
-	CurrentState string    `json:"data"` // Store JSON as a string
+	ID        int       `json:"id"`
+	Name      string    `json:"name"`
+	OwnerID   int       `json:"owner"`
+	CreatedAt time.Time `json:"created"`
+	UpdatedAt time.Time `json:"updated_at"`
+	// CurrentState string    `json:"data"` // Store JSON as a string
 	//  for example: whiteboard.CurrentState = `{"strokes": [...], "shapes": [...]}`
 }
 
@@ -35,11 +35,11 @@ func GetDB() *sql.DB {
 }
 
 func InsertWhiteboard(board *Whiteboard) error {
-	query := `INSERT INTO whiteboards (name, owner_id, created_at, updated_at, current_state)
-	          VALUES (?, ?, ?, ?, ?)`
+	query := `INSERT INTO whiteboards (name, owner_id, created_at, updated_at)
+	          VALUES (?, ?, ?, ?)`
 
 	// Insert the whiteboard data into the database
-	_, err := db.Exec(query, board.Name, board.OwnerID, board.CreatedAt, board.UpdatedAt, board.CurrentState)
+	_, err := db.Exec(query, board.Name, board.OwnerID, board.CreatedAt, board.UpdatedAt)
 	if err != nil {
 		log.Println("Error inserting whiteboard:", err)
 		return err
@@ -54,11 +54,11 @@ func GetWhiteboardById(id int) (*Whiteboard, error) {
 
 	database := GetDB()
 
-	query := `SELECT id, name, owner_id, created_at, updated_at, current_state
-			 From whiteboards WHERE id = ?`
+	query := `SELECT id, name, owner_id, created_at, updated_at
+			 FROM whiteboards WHERE id = ?`
 
 	row := database.QueryRow(query, id)
-	err := row.Scan(&whiteboard.ID, &whiteboard.Name, &whiteboard.OwnerID, &createdAt, &updatedAt, &whiteboard.CurrentState)
+	err := row.Scan(&whiteboard.ID, &whiteboard.Name, &whiteboard.OwnerID, &createdAt, &updatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -68,6 +68,7 @@ func GetWhiteboardById(id int) (*Whiteboard, error) {
 		return nil, err
 	}
 
+	// Parse the timestamps to time.Time
 	whiteboard.CreatedAt, err = time.Parse("2006-01-02 15:04:05", string(createdAt))
 	if err != nil {
 		log.Println("Error parsing created_at:", err)
@@ -86,10 +87,10 @@ func GetWhiteboardById(id int) (*Whiteboard, error) {
 func UpdateWhiteboard(id int, whiteboard *Whiteboard) error {
 	database := GetDB()
 	query := `UPDATE whiteboards 
-              SET name = ?, current_state = ?, updated_at = ?
+              SET name = ?, updated_at = ?
               WHERE id = ?`
 
-	_, err := database.Exec(query, whiteboard.Name, whiteboard.CurrentState, time.Now(), id)
+	_, err := database.Exec(query, whiteboard.Name, time.Now(), id)
 	if err != nil {
 		log.Println("Error updating whiteboard:", err)
 		return err

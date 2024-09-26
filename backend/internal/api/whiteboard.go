@@ -15,7 +15,6 @@ func CreateWhiteboard(w http.ResponseWriter, r *http.Request) {
 	newBoard.OwnerID = 1 // default for right now, use actual user data next time
 	newBoard.CreatedAt = time.Now()
 	newBoard.UpdatedAt = newBoard.CreatedAt
-	newBoard.CurrentState = "{}"
 
 	err := db.InsertWhiteboard(&newBoard)
 	if err != nil {
