@@ -86,11 +86,13 @@ func GetWhiteboardById(id int) (*Whiteboard, error) {
 
 func UpdateWhiteboard(id int, whiteboard *Whiteboard) error {
 	database := GetDB()
+	whiteboard.UpdatedAt = time.Now()
+
 	query := `UPDATE whiteboards 
               SET name = ?, updated_at = ?
               WHERE id = ?`
 
-	_, err := database.Exec(query, whiteboard.Name, time.Now(), id)
+	_, err := database.Exec(query, whiteboard.Name, whiteboard.UpdatedAt, id)
 	if err != nil {
 		log.Println("Error updating whiteboard:", err)
 		return err
