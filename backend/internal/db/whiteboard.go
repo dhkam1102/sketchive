@@ -113,3 +113,14 @@ func DeleteWhiteboard(id int) error {
 
 	return nil
 }
+
+func ClearStrokesByWhiteboardID(whiteboardID int) error {
+	query := `DELETE FROM strokes WHERE whiteboard_id = ?`
+	_, err := db.Exec(query, whiteboardID)
+	if err != nil {
+		log.Printf("Error clearing strokes for whiteboard ID %d: %v", whiteboardID, err)
+		return err
+	}
+	log.Printf("Successfully cleared strokes for whiteboard ID %d", whiteboardID)
+	return nil
+}

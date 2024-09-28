@@ -65,6 +65,14 @@ func main() {
 		}
 	})
 
+	mux.HandleFunc("/whiteboards/clear", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "DELETE" {
+			api.ClearWhiteboardHandler(w, r)
+		} else {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
 	// Stroke related endpoints
 	mux.HandleFunc("/strokes", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {

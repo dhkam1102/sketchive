@@ -109,3 +109,30 @@ func DeleteWhiteboard(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(map[string]string{"message": "Whiteboard deleted successfully"})
 }
+
+func ClearWhiteboardHandler(w http.ResponseWriter, r *http.Request) {
+	whiteboardIDStr := r.URL.Query().Get("id")
+	if whiteboardIDStr == "" {
+		log.Println("Error: missing whiteboard ID in request")
+		http.Error(w, "Missing whiteboard ID", http.StatusBadRequest)
+		return
+	}
+
+	whiteboardID, err := strconv.Atoi(whiteboardIDStr)
+	if err != nil {
+		log.Println("Error converting whiteboard ID to int:", err)
+		http.Error(w, "Invalid whiteboard ID", http.StatusBadRequest)
+		return
+	}
+
+	// Call the DB function to clear strokes for the whiteboard
+	err = db.ClearStrokesByWhiteboardID(whiteboardID)
+	if err != nil {
+		http.Error(w, "Failed to clear strokes", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Successfully cleared strokes for whiteboard ID %d\n", whiteboardID)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Whiteboard cleared successfully"})
+}
