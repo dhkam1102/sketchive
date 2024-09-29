@@ -1,113 +1,191 @@
 import React, { useRef, useEffect, useState } from 'react';
 import './Whiteboard.css';
-import { getWhiteboard, createWhiteboard, updateWhiteboard } from './api'; // Import necessary API functions
+import { getWhiteboard, addStroke, getStrokesHistoryByWhiteboard, clearWhiteboard } from './api';
 
 function Whiteboard() {
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [whiteboard, setWhiteboard] = useState(null); // State to store whiteboard data
+  const [whiteboard, setWhiteboard] = useState(null);
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
-    const loadOrCreateWhiteboard = async () => {
+    const loadWhiteboard = async () => {
       try {
-        // Try to load whiteboard with id = 1
-        const savedWhiteboard = await getWhiteboard(1);
+        const savedWhiteboard = await getWhiteboard(1); // Assuming whiteboard with id=1
         setWhiteboard(savedWhiteboard);
-        drawSavedWhiteboard(savedWhiteboard.currentState); // Render the saved strokes
+  
+        // Fetch the stroke history for the whiteboard
+        const strokeHistory = await getStrokesHistoryByWhiteboard(1);
+  
+        // Log strokeHistory to check what the API returns
+        console.log("Stroke History:", strokeHistory);
+  
+        // Ensure strokeHistory is valid before using it
+        if (Array.isArray(strokeHistory) && strokeHistory.length > 0) {
+          strokeHistory.forEach(stroke => {
+            drawStroke(stroke);
+          });
+        } else {
+          console.log("No strokes found or strokeHistory is not an array.");
+        }
       } catch (error) {
-        console.error("Whiteboard not found. Creating a new one...");
-        // If no whiteboard is found, create a new one
-        const newBoard = await createWhiteboard();
-        setWhiteboard(newBoard);
+        console.error("Failed to load whiteboard or strokes:", error);
       }
     };
+  
+    loadWhiteboard();
+  }, []);
+  
 
-    loadOrCreateWhiteboard(); // Load or create whiteboard on component load
+  useEffect(() => {
+    const updateCanvasSize = () => {
+      setCanvasSize({
+        width: window.innerWidth,
+        height: window.innerHeight * 0.7
+      });
+    };
 
+    updateCanvasSize();
+    window.addEventListener('resize', updateCanvasSize);
+
+    return () => {
+      window.removeEventListener('resize', updateCanvasSize);
+    };
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    canvas.width = canvasSize.width;
+    canvas.height = canvasSize.height;
+
+    const ctx = canvas.getContext('2d');
+    ctx.lineCap = 'round';
+
+    // Redraw existing strokes when canvas size changes
+    if (whiteboard) {
+      getStrokesHistoryByWhiteboard(whiteboard.id).then(strokeHistory => {
+        strokeHistory.forEach(stroke => {
+          drawStroke(stroke);
+        });
+      });
+    }
+  }, [canvasSize, whiteboard]);
+
+  const drawStroke = (stroke) => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
-
-    // Set canvas size and drawing styles
-    canvas.width = window.innerWidth * 0.8;
-    canvas.height = window.innerHeight * 0.6;
-    ctx.lineWidth = 5;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = '#000';
-
-    // Mouse down event to start drawing
-    const startDrawing = (event) => {
-      if (event.type === 'mousedown') {
-        const { offsetX, offsetY } = event;
-        ctx.beginPath();
-        ctx.moveTo(offsetX, offsetY);
-        setIsDrawing(true);
+    if (stroke.path && stroke.path.length > 0) {
+      ctx.beginPath();
+      ctx.moveTo(stroke.path[0].x, stroke.path[0].y);
+      for (let i = 1; i < stroke.path.length; i++) {
+        ctx.lineTo(stroke.path[i].x, stroke.path[i].y);
       }
-    };
+      ctx.strokeStyle = stroke.color;
+      ctx.lineWidth = stroke.width;
+      ctx.stroke();
+      ctx.closePath();
+    }
+  };
 
-    // Mouse move event to draw
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+  
+    const ctx = canvas.getContext('2d');
+  
+    let currentPath = []; // Array to store all points of the current stroke
+  
+    const startDrawing = (event) => {
+      if (!whiteboard || !whiteboard.id) {
+        console.error("Whiteboard is not loaded properly");
+        return;
+      }
+      const { offsetX, offsetY } = event;
+      currentPath = [{ x: offsetX, y: offsetY }]; // Start with the initial point
+      ctx.beginPath();
+      ctx.moveTo(offsetX, offsetY);
+      setIsDrawing(true);
+    };
+    
+  
     const draw = (event) => {
       if (!isDrawing) return;
-      if (event.type === 'mousemove') {
-        const { offsetX, offsetY } = event;
-        ctx.lineTo(offsetX, offsetY);
-        ctx.stroke();
-      }
+      const { offsetX, offsetY } = event;
+      currentPath.push({ x: offsetX, y: offsetY }); // Collect points as user draws
+      ctx.lineTo(offsetX, offsetY);
+      ctx.stroke();
     };
-
-    // Mouse up event to stop drawing
-    const stopDrawing = async () => {
+  
+    const stopDrawing = async (event) => {
+      if (!isDrawing) return;
       setIsDrawing(false);
       ctx.closePath();
-
-      // After drawing is done, save the whiteboard state to the backend (whiteboard id = 1)
-      if (whiteboard) {
-        const canvasData = canvas.toDataURL(); // Convert canvas to an image
-        const updatedWhiteboard = {
-          ...whiteboard,
-          currentState: canvasData, // Store the image data as the current state
-        };
-        await updateWhiteboard(1, updatedWhiteboard); // Save whiteboard with id = 1
+    
+      if (!whiteboard || !whiteboard.id) {
+        console.error("Whiteboard is not set or does not have a valid ID");
+        return;
+      }
+    
+      // Create strokeData with the collected path
+      const strokeData = {
+        whiteboardID: whiteboard.id,
+        ownerID: 1, // Replace with actual user ID if needed
+        path: currentPath,
+        color: ctx.strokeStyle,
+        width: ctx.lineWidth,
+      };
+    
+      console.log("Attempting to add stroke:", strokeData);
+    
+      try {
+        await addStroke(strokeData);
+        console.log("Stroke added:", strokeData);
+      } catch (error) {
+        console.error("Failed to add stroke:", error);
       }
     };
-
-    // Event listeners
+    
+  
+    // Add event listeners for drawing
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mouseleave', stopDrawing);
-
-    // Cleanup event listeners on component unmount
+  
+    // Clean up event listeners
     return () => {
       canvas.removeEventListener('mousedown', startDrawing);
       canvas.removeEventListener('mousemove', draw);
       canvas.removeEventListener('mouseup', stopDrawing);
       canvas.removeEventListener('mouseleave', stopDrawing);
     };
-  }, [isDrawing, whiteboard]); // Dependencies include whiteboard and isDrawing
+  }, [isDrawing, whiteboard]);
 
-  // Function to clear the canvas
-  const clearCanvas = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);  // Clear the entire canvas
-  };
+  const handleClearBoard = async () => {
+    if (!whiteboard || !whiteboard.id) {
+      console.error("Whiteboard is not loaded properly");
+      return;
+    }
 
-  // Function to render the saved whiteboard (if available)
-  const drawSavedWhiteboard = (savedState) => {
-    if (!savedState) return;
-    const img = new Image();
-    img.src = savedState; // Load the image data
-    img.onload = () => {
+    try {
+      await clearWhiteboard(whiteboard.id);
+      console.log("Whiteboard cleared successfully");
+
+      // Clear the canvas
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0); // Draw the saved whiteboard on the canvas
-    };
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    } catch (error) {
+      console.error("Failed to clear whiteboard:", error);
+    }
   };
 
   return (
     <div className="whiteboard-container">
       <canvas ref={canvasRef} className="whiteboard-canvas"></canvas>
-      <button onClick={clearCanvas} className="clear-btn">Clear Canvas</button>
+      <button onClick={handleClearBoard} className="clear-board-button">Clear Board</button>
     </div>
   );
 }

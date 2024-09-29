@@ -1,24 +1,19 @@
-import logo from './logo.svg';
-import './App.css';
 import React from 'react';
+import './App.css';
 import Whiteboard from './Whiteboard';
+import sketchiveLogo from './assets/logo.png';
 
 function App() {
   return (
     <div className="app-container">
-      <header className="app-header">
-        <h1>Real-Time Whiteboard</h1>
-      </header>
-      <main className="whiteboard">
-        {/* Whiteboard component will go here */}
+      {/* <header className="app-header">
+        <img src={sketchiveLogo} alt="Sketchive Logo" className="sketchive-logo" />
+      </header> */}
+      <main className="app-main">
         <Whiteboard />
       </main>
-      <footer className="app-footer">
-        {/* Footer or other information */}
-      </footer>
     </div>
   );
 }
-
 
 export default App;

@@ -10,11 +10,23 @@
     border: 2px solid black;
     background-color: #fff;
   }
-  
-  .clear-btn {
-    margin-top: 20px;
+    
+
+  .clear-board-button {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
     padding: 10px 20px;
     font-size: 16px;
+    background-color: #00bfff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
     cursor: pointer;
   }
-  
+
+  .clear-board-button:hover {
+    background-color: #1934ff;
+  }
