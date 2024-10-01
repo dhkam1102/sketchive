@@ -19,6 +19,11 @@ type Stroke struct {
 	Color        string    `json:"color"`
 	Width        int       `json:"width"`
 	CreatedAt    time.Time `json:"created_at"`
+	Deleted      bool      `json:"deleted"`
+	MinX         float64   `json:"minX"`
+	MaxX         float64   `json:"maxX"`
+	MinY         float64   `json:"minY"`
+	MaxY         float64   `json:"maxY"`
 }
 
 // InsertStroke inserts a stroke into the strokes table and logs the process
