@@ -30,3 +30,54 @@
   .clear-board-button:hover {
     background-color: #1934ff;
   }
+
+
+
+  .tool-selection {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  
+  .tool-button {
+    padding: 10px 20px;
+    margin: 0 5px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #ffffff;
+    border: 1px solid #cccccc;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .tool-button.active {
+    background-color: #e0e0e0;
+    font-weight: bold;
+  }
+  
+  .color-picker {
+    margin: 0 10px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  
+  .line-width-slider {
+    margin: 0 10px;
+    width: 100px;
+  }
+  
+
+/* Custom cursor styles */
+.whiteboard-canvas.pen {
+  cursor: crosshair;
+}
+
+.whiteboard-canvas.eraser {
+  cursor: none; /* Hide the default cursor */
+}
+  

@@ -121,3 +121,29 @@ export async function getStrokesHistoryByWhiteboard(whiteboardId) {
 
   return await response.json();
 }
+
+// Delete strokes based on the bounding box (eraser action)
+export async function deleteStrokesByBoundingBox(whiteboardID, boundingBox) {
+  // Example boundingBox structure:
+  // {
+  //   minX: 10,
+  //   maxX: 50,
+  //   minY: 20,
+  //   maxY: 60,
+  // }
+
+  const response = await fetch(`${API_BASE_URL}/strokes/delete`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ whiteboardID, ...boundingBox }),
+  });
+
+  if (!response.ok) {
+    const errorMessage = await response.text();
+    throw new Error(`Failed to delete strokes: ${response.status} - ${errorMessage}`);
+  }
+
+  return await response.json();
+}
