@@ -9,6 +9,27 @@ import (
 	"time"
 )
 
+// probably need modification
+func calculateBoundingBox(points []db.Point) (float64, float64, float64, float64) {
+	minX, maxX := points[0].X, points[0].X
+	minY, maxY := points[0].Y, points[0].Y
+	for _, point := range points {
+		if point.X < minX {
+			minX = point.X
+		}
+		if point.X > maxX {
+			maxX = point.X
+		}
+		if point.Y < minY {
+			minY = point.Y
+		}
+		if point.Y > maxY {
+			maxY = point.Y
+		}
+	}
+	return minX, maxX, minY, maxY
+}
+
 // AddStroke adds a new stroke to the database and logs relevant details
 func AddStroke(w http.ResponseWriter, r *http.Request) {
 	log.Println("AddStroke API called")
@@ -20,6 +41,13 @@ func AddStroke(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error decoding stroke", http.StatusBadRequest)
 		return
 	}
+
+	// Calculate bounding box for the stroke
+	minX, maxX, minY, maxY := calculateBoundingBox(newStroke.Path)
+	newStroke.MinX = minX
+	newStroke.MaxX = maxX
+	newStroke.MinY = minY
+	newStroke.MaxY = maxY
 
 	newStroke.CreatedAt = time.Now()
 	log.Printf("Decoded stroke data: %+v\n", newStroke)
@@ -61,12 +89,49 @@ func GetStrokesHistoryByWhiteboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ensure strokes is not null, return an empty array if no strokes found
-	if strokes == nil {
-		log.Println("No strokes found for whiteboard ID", id)
-		strokes = []db.Stroke{} // Ensure an empty array is returned
+	// Filter out deleted strokes
+	activeStrokes := []db.Stroke{}
+	for _, stroke := range strokes {
+		if !stroke.Deleted {
+			activeStrokes = append(activeStrokes, stroke)
+		}
 	}
 
 	log.Printf("Successfully retrieved %d strokes for whiteboard ID %d\n", len(strokes), id)
 	json.NewEncoder(w).Encode(strokes)
+}
+
+// UpdateStrokeForDeletion marks strokes as deleted based on the eraser bounding box
+func UpdateStrokeForDeletion(w http.ResponseWriter, r *http.Request) {
+	log.Println("UpdateStrokeForDeletion API called")
+
+	var eraserBox struct {
+		WhiteboardID int     `json:"whiteboardID"`
+		MinX         float64 `json:"minX"`
+		MaxX         float64 `json:"maxX"`
+		MinY         float64 `json:"minY"`
+		MaxY         float64 `json:"maxY"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&eraserBox)
+	if err != nil {
+		log.Println("Error decoding eraser bounding box data:", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Marking strokes for deletion in whiteboard ID %d with bounding box (%f, %f, %f, %f)\n",
+		eraserBox.WhiteboardID, eraserBox.MinX, eraserBox.MaxX, eraserBox.MinY, eraserBox.MaxY)
+
+	// Update strokes in the database that fall within the eraser bounding box
+	err = db.MarkStrokesDeletedByBoundingBox(eraserBox.WhiteboardID, eraserBox.MinX, eraserBox.MaxX, eraserBox.MinY, eraserBox.MaxY)
+	if err != nil {
+		log.Println("Error marking strokes as deleted:", err)
+		http.Error(w, "Failed to mark strokes as deleted", http.StatusInternalServerError)
+		return
+	}
+
+	log.Println("Strokes marked as deleted successfully")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Strokes marked as deleted successfully"})
 }

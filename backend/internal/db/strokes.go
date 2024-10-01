@@ -38,10 +38,12 @@ func InsertStroke(stroke *Stroke) error {
 		return err
 	}
 
-	query := `INSERT INTO strokes (whiteboard_id, owner_id, path, color, width, created_at)
-              VALUES (?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO strokes (whiteboard_id, owner_id, path, color, width, created_at, deleted, minX, maxX, minY, maxY)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
-	result, err := db.Exec(query, stroke.WhiteboardID, stroke.OwnerID, pathJSON, stroke.Color, stroke.Width, stroke.CreatedAt)
+	result, err := db.Exec(query, stroke.WhiteboardID, stroke.OwnerID, pathJSON, stroke.Color, stroke.Width, stroke.CreatedAt,
+		stroke.Deleted, stroke.MinX, stroke.MaxX, stroke.MinY, stroke.MaxY)
+
 	if err != nil {
 		log.Println("Error inserting stroke into database:", err)
 		return err
@@ -55,8 +57,10 @@ func GetStrokesByWhiteboardID(whiteboardID int) ([]Stroke, error) {
 	log.Printf("Fetching strokes for WhiteboardID: %v", whiteboardID)
 
 	var strokes []Stroke
-	query := `SELECT id, whiteboard_id, owner_id, path, color, width, created_at
-              FROM strokes WHERE whiteboard_id = ? ORDER BY created_at ASC`
+	query := `SELECT id, whiteboard_id, owner_id, path, color, width, created_at, minX, maxX, minY, maxY, deleted
+			FROM strokes
+			WHERE whiteboard_id = ? AND deleted = false
+			ORDER BY created_at ASC`
 
 	rows, err := db.Query(query, whiteboardID)
 	if err != nil {
@@ -72,7 +76,7 @@ func GetStrokesByWhiteboardID(whiteboardID int) ([]Stroke, error) {
 		var createdAtStr string // Temporarily store created_at as string
 
 		// Scan into appropriate types
-		if err := rows.Scan(&stroke.ID, &stroke.WhiteboardID, &stroke.OwnerID, &pathStr, &stroke.Color, &stroke.Width, &createdAtStr); err != nil {
+		if err := rows.Scan(&stroke.ID, &stroke.WhiteboardID, &stroke.OwnerID, &pathStr, &stroke.Color, &stroke.Width, &createdAtStr, &stroke.MinX, &stroke.MaxX, &stroke.MinY, &stroke.MaxY, &stroke.Deleted); err != nil {
 			log.Println("Error scanning stroke data:", err)
 			return nil, err
 		}
@@ -95,4 +99,25 @@ func GetStrokesByWhiteboardID(whiteboardID int) ([]Stroke, error) {
 
 	log.Printf("Successfully fetched %d strokes for WhiteboardID %v", len(strokes), whiteboardID)
 	return strokes, nil
+}
+
+// MarkStrokesDeletedByBoundingBox marks strokes as deleted based on the eraser bounding box
+func MarkStrokesDeletedByBoundingBox(whiteboardID int, minX, maxX, minY, maxY float64) error {
+	log.Printf("Marking strokes as deleted for WhiteboardID: %v, BoundingBox: (%f, %f, %f, %f)", whiteboardID, minX, maxX, minY, maxY)
+
+	query := `UPDATE strokes 
+              SET deleted = true 
+              WHERE whiteboard_id = ? AND deleted = false
+              AND minX <= ? AND maxX >= ?
+              AND minY <= ? AND maxY >= ?`
+
+	// Ensure the bounding box parameters are in the correct order
+	result, err := db.Exec(query, whiteboardID, maxX, minX, maxY, minY)
+	if err != nil {
+		log.Println("Error marking strokes as deleted in the database:", err)
+		return err
+	}
+
+	log.Printf("Successfully marked strokes as deleted, result: %v", result)
+	return nil
 }

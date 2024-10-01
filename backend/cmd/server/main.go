@@ -85,6 +85,15 @@ func main() {
 		}
 	})
 
+	// Endpoint for updating stroke status (marking strokes as deleted)
+	mux.HandleFunc("/strokes/delete", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" { // POST to delete based on bounding box
+			api.UpdateStrokeForDeletion(w, r)
+		} else {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
 	// Start the server with CORS enabled
 	fmt.Println("Starting server on :8080")
 	log.Fatal(http.ListenAndServe(":8080", enableCORS(mux)))
