@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"sketchive/internal/db"
@@ -10,7 +11,10 @@ import (
 )
 
 // probably need modification
-func calculateBoundingBox(points []db.Point) (float64, float64, float64, float64) {
+func calculateBoundingBox(points []db.Point) (float64, float64, float64, float64, error) {
+	if len(points) == 0 {
+		return 0, 0, 0, 0, fmt.Errorf("points slice is empty, cannot calculate bounding box")
+	}
 	minX, maxX := points[0].X, points[0].X
 	minY, maxY := points[0].Y, points[0].Y
 	for _, point := range points {
@@ -27,7 +31,7 @@ func calculateBoundingBox(points []db.Point) (float64, float64, float64, float64
 			maxY = point.Y
 		}
 	}
-	return minX, maxX, minY, maxY
+	return minX, maxX, minY, maxY, nil
 }
 
 // AddStroke adds a new stroke to the database and logs relevant details
@@ -43,7 +47,12 @@ func AddStroke(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Calculate bounding box for the stroke
-	minX, maxX, minY, maxY := calculateBoundingBox(newStroke.Path)
+	minX, maxX, minY, maxY, err := calculateBoundingBox(newStroke.Path)
+	if err != nil {
+		log.Println("Error calculating bounding box:", err)
+		http.Error(w, "Failed to calculate bounding box", http.StatusBadRequest)
+		return
+	}
 	newStroke.MinX = minX
 	newStroke.MaxX = maxX
 	newStroke.MinY = minY
