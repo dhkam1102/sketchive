@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import './Whiteboard.css';
-import { getWhiteboard, addStroke, getStrokesHistoryByWhiteboard, clearWhiteboard, deleteStrokesByBoundingBox} from './api';
+import { getWhiteboard, addStroke, getStrokesHistoryByWhiteboard, clearWhiteboard, deleteStrokesByBoundingBox} from './api.js';
 
 function Whiteboard() {
   const canvasRef = useRef(null);
@@ -11,6 +11,7 @@ function Whiteboard() {
   const [strokeStyle, setStrokeStyle] = useState("#000000");
   const [lineWidth, setLineWidth] = useState(2);
 
+  // loading the whiteboard: getting stroke history and drawing
   useEffect(() => {
     const loadWhiteboard = async () => {
       try {
@@ -39,7 +40,7 @@ function Whiteboard() {
     loadWhiteboard();
   }, []);
   
-
+  // Setting the canvas size
   useEffect(() => {
     const updateCanvasSize = () => {
       setCanvasSize({
@@ -49,6 +50,7 @@ function Whiteboard() {
     };
 
     updateCanvasSize();
+    // setting up a event listener so whiteboard will be updated when changing the window size
     window.addEventListener('resize', updateCanvasSize);
 
     return () => {
@@ -56,6 +58,7 @@ function Whiteboard() {
     };
   }, []);
 
+  // Redraw the stokes: when whiteboard is updated or canvas is resized
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -82,6 +85,7 @@ function Whiteboard() {
       });
     }
   }, [canvasSize, whiteboard]);
+
 
   const drawStroke = (stroke) => {
     const canvas = canvasRef.current;
