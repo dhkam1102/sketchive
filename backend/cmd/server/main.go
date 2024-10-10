@@ -115,6 +115,7 @@ var upgrader = websocket.Upgrader{
 
 type Client struct {
 	conn *websocket.Conn
+	send chan []byte
 }
 
 type Hub struct {
@@ -131,6 +132,43 @@ var hub = Hub{
 	unregister: make(chan *Client),
 }
 
+func (c *Client) readPump() {
+	defer func() {
+		hub.unregister <- c
+		c.conn.Close()
+	}()
+	for {
+		_, message, err := c.conn.ReadMessage()
+		if err != nil {
+			log.Printf("ERROR reading message: %v", err)
+			hub.unregister <- c
+			break
+		}
+		hub.broadcast <- message
+	}
+}
+
+func (c *Client) writePump() {
+	defer func() {
+		c.conn.Close()
+	}()
+	for {
+		select {
+		case message, ok := <-c.send:
+			if !ok {
+				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
+
+			err := c.conn.WriteMessage(websocket.TextMessage, message)
+			if err != nil {
+				log.Printf("ERROR writing message: %v", err)
+				return
+			}
+		}
+	}
+}
+
 func (h *Hub) run() {
 	for {
 		select {
@@ -143,10 +181,10 @@ func (h *Hub) run() {
 			}
 		case message := <-h.broadcast:
 			for client := range h.clients {
-				err := client.conn.WriteMessage(websocket.TextMessage, message)
-				if err != nil {
-					log.Printf("ERROR in writeing message: %v", err)
-					client.conn.Close()
+				select {
+				case client.send <- message:
+				default:
+					close(client.send)
 					delete(h.clients, client)
 				}
 			}
@@ -162,19 +200,11 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	defer ws.Close()
 
-	client := &Client{conn: ws}
+	client := &Client{conn: ws, send: make(chan []byte, 256)}
 	hub.register <- client
 
-	//Listing for message from this client
-	for {
-		_, msg, err := ws.ReadMessage()
-		if err != nil {
-			log.Println("ERROR reading message: ", err)
-			hub.unregister <- client
-			break
-		}
-		hub.broadcast <- msg
-	}
+	go client.writePump()
+	client.readPump()
 }
 
 func main() {
