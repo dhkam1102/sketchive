@@ -1,5 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import './Whiteboard.css';
+// import { getWhiteboard, getStrokesHistoryByWhiteboard } from './api.js';
+
 import { getWhiteboard, addStroke, getStrokesHistoryByWhiteboard, clearWhiteboard, deleteStrokesByBoundingBox} from './api.js';
 
 function Whiteboard() {
